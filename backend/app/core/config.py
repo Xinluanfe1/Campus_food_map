@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     upload_dir: str = "../data/shop_photos"
     map_dir: str = "../data/maps"
 
+    # 初始化管理员密码：仅在初始化脚本创建管理员账号时使用，不写入代码仓库。
+    admin_initial_password: str | None = None
+
     @property
     def cors_origin_list(self) -> list[str]:
         """把逗号分隔的前端地址转换为列表。"""
