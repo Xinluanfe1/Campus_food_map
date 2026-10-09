@@ -87,8 +87,14 @@ export default function ShopDetailCard({
       />
       <div className="shop-card-header">
         <h3>{shopName}</h3>
-        <button type="button" className="ghost-button shop-card-close" onClick={onClose} aria-label="关闭店铺详情">
-          关闭
+        <button
+          type="button"
+          className="shop-card-close"
+          onClick={onClose}
+          aria-label="关闭店铺详情"
+          title="关闭"
+        >
+          ×
         </button>
       </div>
 

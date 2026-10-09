@@ -158,21 +158,26 @@ async function main() {
 
   const markerInfo = markerRect.result.value;
   console.log("点位信息：", JSON.stringify(markerInfo));
-  if (markerInfo) {
+
+  async function clickAt(x, y) {
     await client.send("Input.dispatchMouseEvent", {
       type: "mousePressed",
-      x: markerInfo.x,
-      y: markerInfo.y,
+      x,
+      y,
       button: "left",
       clickCount: 1,
     });
     await client.send("Input.dispatchMouseEvent", {
       type: "mouseReleased",
-      x: markerInfo.x,
-      y: markerInfo.y,
+      x,
+      y,
       button: "left",
       clickCount: 1,
     });
+  }
+
+  if (markerInfo) {
+    await clickAt(markerInfo.x, markerInfo.y);
   }
 
   const immediate = await client.send("Runtime.evaluate", {
@@ -183,6 +188,29 @@ async function main() {
     returnByValue: true,
   });
   console.log("点击后立即状态：", JSON.stringify(immediate.result.value));
+
+  // 再次点击同一个点位应当关闭卡片；点击地图空白区域则不应关闭
+  if (markerInfo) {
+    await clickAt(markerInfo.x, markerInfo.y);
+    await sleep(600);
+    const afterToggle = await client.send("Runtime.evaluate", {
+      expression: "Boolean(document.querySelector('.shop-card'))",
+      returnByValue: true,
+    });
+    console.log("再次点击同一点位后卡片是否存在：", afterToggle.result.value);
+
+    await clickAt(markerInfo.x, markerInfo.y);
+    await sleep(1500);
+
+    // 点击地图空白区域（远离点位），卡片应当保持打开
+    await clickAt(Math.round(markerInfo.x), Math.round(markerInfo.y + 200));
+    await sleep(600);
+    const afterBlankClick = await client.send("Runtime.evaluate", {
+      expression: "Boolean(document.querySelector('.shop-card'))",
+      returnByValue: true,
+    });
+    console.log("点击地图空白区域后卡片是否存在（应为 true）：", afterBlankClick.result.value);
+  }
 
   await sleep(2500);
 

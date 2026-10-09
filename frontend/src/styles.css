@@ -456,8 +456,23 @@ button:disabled {
 }
 
 .shop-card-close {
-  padding: 4px 10px;
-  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  background: #f2f3f5;
+  color: #4e5969;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.shop-card-close:hover {
+  background: #e5e6eb;
+  color: #1f2329;
 }
 
 .shop-card-body {

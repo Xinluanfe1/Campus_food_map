@@ -12,7 +12,6 @@ interface FoodMapProps {
   selectedPointId: number | null;
   resetSignal: number;
   onSelectPoint: (point: ShopPoint) => void;
-  onClearSelection: () => void;
   onMapError: (message: string) => void;
   renderOverlay?: (
     point: { x: number; y: number; width: number; height: number } | null,
@@ -31,7 +30,6 @@ export default function FoodMap({
   selectedPointId,
   resetSignal,
   onSelectPoint,
-  onClearSelection,
   onMapError,
   renderOverlay,
 }: FoodMapProps) {
@@ -47,14 +45,12 @@ export default function FoodMap({
   } | null>(null);
 
   const selectRef = useRef(onSelectPoint);
-  const clearRef = useRef(onClearSelection);
   const errorRef = useRef(onMapError);
 
   useEffect(() => {
     selectRef.current = onSelectPoint;
-    clearRef.current = onClearSelection;
     errorRef.current = onMapError;
-  }, [onSelectPoint, onClearSelection, onMapError]);
+  }, [onSelectPoint, onMapError]);
 
   /** 计算选中点位在容器内的像素坐标；卡片据此锚定在点位附近。 */
   const updateOverlayPoint = useCallback(() => {
@@ -133,15 +129,8 @@ export default function FoodMap({
     }
 
     markerLayerRef.current = L.layerGroup().addTo(map);
-    map.on("click", (event: L.LeafletMouseEvent) => {
-      // Leaflet 会把点位的点击同时派发给地图，这里需要区分：
-      // 点击点位由点位处理器选中店铺，点击其他区域才关闭详情卡片。
-      const target = event.originalEvent?.target as Element | null;
-      if (target instanceof Element && target.classList.contains("leaflet-interactive")) {
-        return;
-      }
-      clearRef.current();
-    });
+    // 说明：点击地图空白区域不关闭详情卡片，关闭只能通过卡片右上角的 ×
+    // 或再次点击同一个美食点触发（对应开发文档 5.2）。
 
     return () => {
       map.remove();

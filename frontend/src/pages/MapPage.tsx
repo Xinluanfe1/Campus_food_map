@@ -98,9 +98,25 @@ export default function MapPage() {
     };
   }, [campusId, reloadToken]);
 
+  const handleClearSelection = useCallback(() => {
+    detailRequestRef.current += 1;
+    setSelectedPoint(null);
+    setDetail(null);
+    setDetailError("");
+    setDetailLoading(false);
+    setNotice("");
+  }, []);
+
   const handleSelectPoint = useCallback(
     (point: ShopPoint) => {
       setNotice("");
+
+      // 再次点击同一个点位时关闭卡片（点击地图空白区域不会关闭）。
+      if (selectedPoint?.id === point.id) {
+        handleClearSelection();
+        return;
+      }
+
       if (!user) {
         // 游客点击点位时不请求详情接口，只提示登录。
         setSelectedPoint(null);
@@ -134,17 +150,8 @@ export default function MapPage() {
           }
         });
     },
-    [campusId, user],
+    [campusId, handleClearSelection, selectedPoint, user],
   );
-
-  const handleClearSelection = useCallback(() => {
-    detailRequestRef.current += 1;
-    setSelectedPoint(null);
-    setDetail(null);
-    setDetailError("");
-    setDetailLoading(false);
-    setNotice("");
-  }, []);
 
   const handleMapError = useCallback((message: string) => {
     setError(message);
@@ -220,7 +227,6 @@ export default function MapPage() {
               selectedPointId={selectedPoint?.id ?? null}
               resetSignal={resetSignal}
               onSelectPoint={handleSelectPoint}
-              onClearSelection={handleClearSelection}
               onMapError={handleMapError}
               renderOverlay={(position) => {
                 if (!position || !selectedPoint) {
@@ -269,7 +275,7 @@ export default function MapPage() {
       </section>
 
       <p className="hint">
-        提示：游客可以浏览地图与公开点位；登录用户点击点位会在点位附近打开店铺详情信息卡片，点击地图空白处或关闭按钮即可关闭。
+        提示：游客可以浏览地图与公开点位；登录用户点击点位会在点位附近打开店铺详情信息卡片，点击卡片右上角的 × 或再次点击同一个点位即可关闭。
       </p>
     </main>
   );
