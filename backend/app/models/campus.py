@@ -83,6 +83,12 @@ class Campus(Base):
         nullable=True,
         comment="真实地图校园范围半径（米），可为空；为空时后端不做范围过滤",
     )
+    map_provider: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="tiles",
+        comment="真实地图提供方：tiles（瓦片地图）或 baidu（百度 JSAPI）",
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, comment="是否允许正常访问")
     created_at: Mapped[datetime] = mapped_column(
         UTCDateTime, nullable=False, default=utc_now, comment="创建时间（UTC）"

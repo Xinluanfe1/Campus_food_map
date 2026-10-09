@@ -6,6 +6,8 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 MAP_TYPES = {"image", "real"}
 MAP_TYPE_MESSAGE = "地图类型只允许 image（图片底图）或 real（真实地图）。"
+MAP_PROVIDERS = {"tiles", "baidu"}
+MAP_PROVIDER_MESSAGE = "真实地图提供方只允许 tiles（瓦片地图）或 baidu（百度 JSAPI）。"
 
 
 def _validate_map_fields(model: BaseModel) -> None:
@@ -13,6 +15,10 @@ def _validate_map_fields(model: BaseModel) -> None:
 
     if model.map_type not in MAP_TYPES:
         raise ValueError(MAP_TYPE_MESSAGE)
+    if model.map_provider not in MAP_PROVIDERS:
+        raise ValueError(MAP_PROVIDER_MESSAGE)
+    if model.map_type == "image" and model.map_provider != "tiles":
+        raise ValueError("图片底图模式只能使用 tiles 提供方。")
     if model.default_zoom <= 0:
         raise ValueError("默认缩放级别必须大于 0。")
     if model.boundary_radius_meters is not None and model.boundary_radius_meters <= 0:
@@ -52,6 +58,7 @@ class CampusMapFields(BaseModel):
     """校园地图配置的公共字段。"""
 
     map_type: str = Field(..., description="地图类型：image 或 real")
+    map_provider: str = Field("tiles", description="真实地图提供方：tiles 或 baidu")
     map_asset_url: str | None = Field(None, max_length=500, description="图片底图资源路径")
     tile_url_template: str | None = Field(None, max_length=500, description="真实地图瓦片地址模板")
     map_attribution: str | None = Field(None, max_length=300, description="地图署名文本")
@@ -144,6 +151,7 @@ class CampusDetail(BaseModel):
     campus_id: str
     campus_name: str
     map_type: str
+    map_provider: str
     map_asset_url: str | None
     tile_url_template: str | None
     map_attribution: str | None
@@ -170,6 +178,7 @@ class CampusMapConfig(BaseModel):
     campus_id: str
     campus_name: str
     map_type: str
+    map_provider: str
     map_asset_url: str | None
     tile_url_template: str | None
     map_attribution: str | None
@@ -181,6 +190,7 @@ class CampusMapConfig(BaseModel):
     default_latitude: float | None
     default_longitude: float | None
     default_zoom: float
+    baidu_map_ak: str | None = None
 
 
 class ShopPoint(BaseModel):

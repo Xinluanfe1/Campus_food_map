@@ -10,6 +10,7 @@ import {
 } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import AdminMapPanel from "../components/AdminMapPanel";
+import BaiduFoodMap from "../components/BaiduFoodMap";
 import FoodMap from "../components/FoodMap";
 import ShopDetailCard from "../components/ShopDetailCard";
 import { useHealthStatus } from "../hooks/useHealthStatus";
@@ -253,6 +254,39 @@ export default function MapPage() {
     [points, shopTypeFilter],
   );
 
+  const mapProps = campus
+    ? {
+        campus,
+        points,
+        shopTypeFilter,
+        selectedPointId: selectedPoint?.id ?? null,
+        resetSignal,
+        focusTarget,
+        onSelectPoint: handleSelectPoint,
+        onMapError: handleMapError,
+        renderOverlay: (position: { x: number; y: number; width: number; height: number } | null) => {
+          if (!position || !selectedPoint) {
+            return null;
+          }
+          return (
+            <ShopDetailCard
+              pointX={position.x}
+              pointY={position.y}
+              containerWidth={position.width}
+              containerHeight={position.height}
+              shopName={selectedPoint.name}
+              shopType={selectedPoint.shop_type}
+              detail={detail}
+              loading={detailLoading}
+              error={detailError}
+              onClose={handleClearSelection}
+              onRatingChanged={refreshDetail}
+            />
+          );
+        },
+      }
+    : null;
+
   return (
     <main className="page map-page">
       <section className="map-toolbar">
@@ -359,36 +393,11 @@ export default function MapPage() {
         <div className="map-canvas">
           {loading && <p className="map-overlay">正在加载地图……</p>}
           {campus && (
-            <FoodMap
-              campus={campus}
-              points={points}
-              shopTypeFilter={shopTypeFilter}
-              selectedPointId={selectedPoint?.id ?? null}
-              resetSignal={resetSignal}
-              onSelectPoint={handleSelectPoint}
-              onMapError={handleMapError}
-              focusTarget={focusTarget}
-              renderOverlay={(position) => {
-                if (!position || !selectedPoint) {
-                  return null;
-                }
-                return (
-                  <ShopDetailCard
-                    pointX={position.x}
-                    pointY={position.y}
-                    containerWidth={position.width}
-                    containerHeight={position.height}
-                    shopName={selectedPoint.name}
-                    shopType={selectedPoint.shop_type}
-                    detail={detail}
-                    loading={detailLoading}
-                    error={detailError}
-                    onClose={handleClearSelection}
-                    onRatingChanged={refreshDetail}
-                  />
-                );
-              }}
-            />
+            <>{campus.map_provider === "baidu" && mapProps ? (
+              <BaiduFoodMap {...mapProps} />
+            ) : mapProps ? (
+              <FoodMap {...mapProps} />
+            ) : null}</>
           )}
           {!loading && !campus && <p className="map-overlay">{error || "地图暂不可用。"}</p>}
           {notice && <p className="map-notice">{notice}</p>}

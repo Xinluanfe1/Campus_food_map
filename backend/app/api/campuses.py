@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Query
 
 from app.api.deps import DbSession
+from app.core.config import settings
 from app.schemas.campus import CampusDetail, CampusMapConfig, CampusSummary, ShopPoint
 from app.services import campus_service
 
@@ -41,10 +42,14 @@ def read_campus(campus_id: str, session: DbSession) -> dict:
 @router.get("/{campus_id}/map", summary="获取底图类型、中心、缩放和署名等信息")
 def read_campus_map(campus_id: str, session: DbSession) -> dict:
     campus = campus_service.get_campus(session, campus_id)
+    data = CampusMapConfig.model_validate(campus).model_dump(mode="json")
+    # 百度地图模式下需要把 AK 下发给前端；AK 由部署环境变量提供，不写入代码仓库。
+    # 其他提供方返回 None，避免无关密钥出现在响应中。
+    data["baidu_map_ak"] = settings.baidu_map_ak if campus.map_provider == "baidu" else None
     return {
         "success": True,
         "message": "获取成功",
-        "data": CampusMapConfig.model_validate(campus).model_dump(mode="json"),
+        "data": data,
     }
 
 

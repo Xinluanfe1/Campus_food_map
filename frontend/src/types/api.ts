@@ -39,6 +39,7 @@ export interface CampusMapConfig {
   campus_id: string;
   campus_name: string;
   map_type: "image" | "real";
+  map_provider: "tiles" | "baidu";
   map_asset_url: string | null;
   tile_url_template: string | null;
   map_attribution: string | null;
@@ -51,6 +52,7 @@ export interface CampusMapConfig {
   default_longitude: number | null;
   default_zoom: number;
   boundary_radius_meters: number | null;
+  baidu_map_ak?: string | null;
 }
 
 export interface ShopPoint {

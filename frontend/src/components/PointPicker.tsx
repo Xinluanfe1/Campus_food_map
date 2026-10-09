@@ -4,6 +4,7 @@ import "leaflet/dist/leaflet.css";
 
 import type { CampusMapConfig } from "../types/api";
 import { imageBounds, normalizedToLeaflet } from "../utils/mapCoordinates";
+import BaiduPointPicker from "./BaiduPointPicker";
 
 export interface PickedPoint {
   map_x: number | null;
@@ -28,7 +29,7 @@ interface PointPickerProps {
 }
 
 /** 地图点位选择器：图片底图返回归一化坐标，真实地图返回经纬度。 */
-export default function PointPicker({
+function LeafletPointPicker({
   campus,
   value,
   onChange,
@@ -162,4 +163,12 @@ export default function PointPicker({
   }, [campus, value]);
 
   return <div className="point-picker" ref={containerRef} style={{ height }} />;
+}
+
+/** 按校园的地图提供方选择 Leaflet 或百度地图实现。 */
+export default function PointPicker(props: PointPickerProps) {
+  if (props.campus.map_provider === "baidu") {
+    return <BaiduPointPicker {...props} />;
+  }
+  return <LeafletPointPicker {...props} />;
 }

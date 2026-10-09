@@ -47,6 +47,10 @@ class Settings(BaseSettings):
     cookie_secure: bool = False
     cookie_samesite: str = "lax"
 
+    # 百度地图 JSAPI 密钥：仅通过环境变量提供，不写入代码仓库。
+    # 只有使用百度地图提供方的校园才会读取该值。
+    baidu_map_ak: str | None = None
+
     @property
     def cors_origin_list(self) -> list[str]:
         """把逗号分隔的前端地址转换为列表。"""
