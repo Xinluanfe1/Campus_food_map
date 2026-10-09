@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -14,6 +14,9 @@ interface FoodMapProps {
   onSelectPoint: (point: ShopPoint) => void;
   onClearSelection: () => void;
   onMapError: (message: string) => void;
+  renderOverlay?: (
+    point: { x: number; y: number; width: number; height: number } | null,
+  ) => ReactNode;
 }
 
 const SHOP_COLORS: Record<string, string> = {
@@ -30,10 +33,18 @@ export default function FoodMap({
   onSelectPoint,
   onClearSelection,
   onMapError,
+  renderOverlay,
 }: FoodMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markerLayerRef = useRef<L.LayerGroup | null>(null);
+  const pointLatLngsRef = useRef<Map<number, [number, number]>>(new Map());
+  const [overlayPoint, setOverlayPoint] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
 
   const selectRef = useRef(onSelectPoint);
   const clearRef = useRef(onClearSelection);
@@ -44,6 +55,28 @@ export default function FoodMap({
     clearRef.current = onClearSelection;
     errorRef.current = onMapError;
   }, [onSelectPoint, onClearSelection, onMapError]);
+
+  /** 计算选中点位在容器内的像素坐标；卡片据此锚定在点位附近。 */
+  const updateOverlayPoint = useCallback(() => {
+    const map = mapRef.current;
+    if (!map || selectedPointId === null) {
+      setOverlayPoint(null);
+      return;
+    }
+    const latlng = pointLatLngsRef.current.get(selectedPointId);
+    if (!latlng) {
+      setOverlayPoint(null);
+      return;
+    }
+    const size = map.getSize();
+    const containerPoint = map.latLngToContainerPoint(L.latLng(latlng[0], latlng[1]));
+    setOverlayPoint({
+      x: containerPoint.x,
+      y: containerPoint.y,
+      width: size.x,
+      height: size.y,
+    });
+  }, [selectedPointId]);
 
   // 初始化地图：校园或底图类型变化时重建。
   useEffect(() => {
@@ -100,14 +133,44 @@ export default function FoodMap({
     }
 
     markerLayerRef.current = L.layerGroup().addTo(map);
-    map.on("click", () => clearRef.current());
+    map.on("click", (event: L.LeafletMouseEvent) => {
+      // Leaflet 会把点位的点击同时派发给地图，这里需要区分：
+      // 点击点位由点位处理器选中店铺，点击其他区域才关闭详情卡片。
+      const target = event.originalEvent?.target as Element | null;
+      if (target instanceof Element && target.classList.contains("leaflet-interactive")) {
+        return;
+      }
+      clearRef.current();
+    });
 
     return () => {
       map.remove();
       mapRef.current = null;
       markerLayerRef.current = null;
+      pointLatLngsRef.current.clear();
     };
   }, [campus]);
+
+  // 地图拖动、缩放或容器变化时重新计算卡片锚点，保证卡片始终指向点位。
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) {
+      return;
+    }
+    const handler = () => updateOverlayPoint();
+    map.on("move", handler);
+    map.on("zoom", handler);
+    map.on("zoomend", handler);
+    map.on("moveend", handler);
+    map.on("resize", handler);
+    return () => {
+      map.off("move", handler);
+      map.off("zoom", handler);
+      map.off("zoomend", handler);
+      map.off("moveend", handler);
+      map.off("resize", handler);
+    };
+  }, [campus, updateOverlayPoint]);
 
   // 点位渲染：按店铺类型筛选，图片模式使用归一化坐标换算。
   useEffect(() => {
@@ -117,6 +180,7 @@ export default function FoodMap({
     }
 
     layer.clearLayers();
+    pointLatLngsRef.current.clear();
     const geometry = {
       width: campus.image_width ?? 1,
       height: campus.image_height ?? 1,
@@ -141,6 +205,7 @@ export default function FoodMap({
         latlng = [point.latitude, point.longitude];
       }
 
+      pointLatLngsRef.current.set(point.id, latlng);
       const selected = selectedPointId === point.id;
       const marker = L.circleMarker(latlng, {
         radius: selected ? 12 : 9,
@@ -158,7 +223,9 @@ export default function FoodMap({
       });
       marker.addTo(layer);
     }
-  }, [campus, points, shopTypeFilter, selectedPointId]);
+
+    updateOverlayPoint();
+  }, [campus, points, shopTypeFilter, selectedPointId, updateOverlayPoint]);
 
   // 重置视图。
   useEffect(() => {
@@ -181,5 +248,10 @@ export default function FoodMap({
     }
   }, [resetSignal, campus]);
 
-  return <div className="food-map" ref={containerRef} />;
+  return (
+    <div className="map-stage">
+      <div className="food-map" ref={containerRef} />
+      {renderOverlay ? renderOverlay(overlayPoint) : null}
+    </div>
+  );
 }

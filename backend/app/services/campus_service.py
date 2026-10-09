@@ -53,23 +53,29 @@ def get_campus(session: Session, campus_id: str, *, include_inactive: bool = Fal
     return campus
 
 
-def is_off_campus(campus: Campus, shop: Shop) -> bool:
-    """判断真实地图模式下店铺是否超出校园配置的范围半径。"""
+def is_point_off_campus(campus: Campus, latitude: float, longitude: float) -> bool:
+    """判断某个经纬度点是否超出校园配置的范围半径。"""
 
     if campus.allow_off_campus or campus.boundary_radius_meters is None:
         return False
     if campus.default_latitude is None or campus.default_longitude is None:
         return False
-    if shop.latitude is None or shop.longitude is None:
-        return False
 
     distance = haversine_meters(
         campus.default_latitude,
         campus.default_longitude,
-        shop.latitude,
-        shop.longitude,
+        latitude,
+        longitude,
     )
     return distance > campus.boundary_radius_meters
+
+
+def is_off_campus(campus: Campus, shop: Shop) -> bool:
+    """判断真实地图模式下店铺是否超出校园配置的范围半径。"""
+
+    if shop.latitude is None or shop.longitude is None:
+        return False
+    return is_point_off_campus(campus, shop.latitude, shop.longitude)
 
 
 def list_public_shop_points(session: Session, campus: Campus) -> list[Shop]:

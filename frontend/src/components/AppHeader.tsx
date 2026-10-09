@@ -34,6 +34,8 @@ export default function AppHeader() {
             <span className="nav-muted">正在检查登录状态……</span>
           ) : user ? (
             <>
+              <Link to="/submit">提交店铺</Link>
+              {user.role === "admin" && <Link to="/admin/shops">审核店铺</Link>}
               <span className="nav-muted">
                 {user.username}
                 {user.role === "admin" ? "（管理员）" : ""}

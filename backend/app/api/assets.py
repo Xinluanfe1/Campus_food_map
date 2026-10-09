@@ -1,4 +1,4 @@
-"""静态资源访问：仅允许访问已被校园配置引用的底图文件。"""
+"""静态资源访问：仅允许访问已配置的底图与被公开店铺引用的照片。"""
 
 import re
 
@@ -10,7 +10,7 @@ from app.api.deps import DbSession
 from app.core.config import settings
 from app.core.errors import BusinessError
 from app.db.session import resolve_storage_dir
-from app.models import Campus
+from app.models import Campus, Shop
 
 router = APIRouter(tags=["静态资源"])
 
@@ -28,6 +28,26 @@ def read_campus_map(filename: str, session: DbSession) -> FileResponse:
         raise BusinessError(404, "该底图未被任何校园配置引用。")
 
     directory = resolve_storage_dir(settings.map_dir).resolve()
+    file_path = (directory / filename).resolve()
+    if directory not in file_path.parents or not file_path.is_file():
+        raise BusinessError(404, "文件不存在。")
+
+    return FileResponse(file_path)
+
+
+@router.get("/media/shop_photos/{filename}", summary="访问已公开店铺的照片")
+def read_shop_photo(filename: str, session: DbSession) -> FileResponse:
+    if not SAFE_FILENAME_PATTERN.match(filename) or ".." in filename:
+        raise BusinessError(404, "文件不存在。")
+
+    photo_url = f"/media/shop_photos/{filename}"
+    referenced = session.scalar(
+        select(Shop.id).where(Shop.photo_url == photo_url, Shop.status == "approved")
+    )
+    if referenced is None:
+        raise BusinessError(404, "照片未公开或不存在。")
+
+    directory = resolve_storage_dir(settings.upload_dir).resolve()
     file_path = (directory / filename).resolve()
     if directory not in file_path.parents or not file_path.is_file():
         raise BusinessError(404, "文件不存在。")

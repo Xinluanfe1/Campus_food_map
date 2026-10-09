@@ -1,12 +1,19 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
-import { fetchCampusMap, fetchCampuses, fetchShopPoints } from "../api/client";
+import { fetchCampusMap, fetchCampuses, fetchShopDetail, fetchShopPoints } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import AdminMapPanel from "../components/AdminMapPanel";
 import FoodMap from "../components/FoodMap";
+import ShopDetailCard from "../components/ShopDetailCard";
 import { useHealthStatus } from "../hooks/useHealthStatus";
-import type { CampusMapConfig, CampusSummary, ShopPoint, ShopTypeFilter } from "../types/api";
+import type {
+  CampusMapConfig,
+  CampusSummary,
+  ShopDetailData,
+  ShopPoint,
+  ShopTypeFilter,
+} from "../types/api";
 
 export default function MapPage() {
   const { user } = useAuth();
@@ -24,6 +31,10 @@ export default function MapPage() {
   const [resetSignal, setResetSignal] = useState(0);
   const [reloadToken, setReloadToken] = useState(0);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [detail, setDetail] = useState<ShopDetailData | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
+  const detailRequestRef = useRef(0);
   const health = useHealthStatus();
 
   // 1. 读取校园列表，未指定校园时默认使用第一个可公开访问的校园。
@@ -66,6 +77,7 @@ export default function MapPage() {
         setCampus(campusResponse.data);
         setPoints(pointsResponse.data.items);
         setSelectedPoint(null);
+        setDetail(null);
         setNotice("");
       })
       .catch((caught) => {
@@ -92,19 +104,45 @@ export default function MapPage() {
       if (!user) {
         // 游客点击点位时不请求详情接口，只提示登录。
         setSelectedPoint(null);
+        setDetail(null);
         setNotice(`游客不能查看店铺详情，请先登录后再查看“${point.name}”。`);
         return;
       }
+
       setSelectedPoint(point);
-      setNotice(
-        `已选中“${point.name}”（${point.shop_type === "vendor" ? "摊贩" : "商铺"}）。店铺详情信息卡片将在第五步实现。`,
-      );
+      setDetail(null);
+      setDetailError("");
+      setDetailLoading(true);
+
+      // 记录请求序号，避免快速切换点位时旧请求覆盖新内容。
+      detailRequestRef.current += 1;
+      const requestId = detailRequestRef.current;
+      fetchShopDetail(campusId, point.id)
+        .then((response) => {
+          if (detailRequestRef.current === requestId) {
+            setDetail(response.data);
+          }
+        })
+        .catch((caught) => {
+          if (detailRequestRef.current === requestId) {
+            setDetailError(caught instanceof Error ? caught.message : "店铺详情加载失败。");
+          }
+        })
+        .finally(() => {
+          if (detailRequestRef.current === requestId) {
+            setDetailLoading(false);
+          }
+        });
     },
-    [user],
+    [campusId, user],
   );
 
   const handleClearSelection = useCallback(() => {
+    detailRequestRef.current += 1;
     setSelectedPoint(null);
+    setDetail(null);
+    setDetailError("");
+    setDetailLoading(false);
     setNotice("");
   }, []);
 
@@ -184,6 +222,25 @@ export default function MapPage() {
               onSelectPoint={handleSelectPoint}
               onClearSelection={handleClearSelection}
               onMapError={handleMapError}
+              renderOverlay={(position) => {
+                if (!position || !selectedPoint) {
+                  return null;
+                }
+                return (
+                  <ShopDetailCard
+                    pointX={position.x}
+                    pointY={position.y}
+                    containerWidth={position.width}
+                    containerHeight={position.height}
+                    shopName={selectedPoint.name}
+                    shopType={selectedPoint.shop_type}
+                    detail={detail}
+                    loading={detailLoading}
+                    error={detailError}
+                    onClose={handleClearSelection}
+                  />
+                );
+              }}
             />
           )}
           {!loading && !campus && <p className="map-overlay">{error || "地图暂不可用。"}</p>}
@@ -212,7 +269,7 @@ export default function MapPage() {
       </section>
 
       <p className="hint">
-        提示：游客可以浏览地图与公开点位；登录用户点击点位可以查看店铺信息，店铺详情信息卡片将在第五步提供。
+        提示：游客可以浏览地图与公开点位；登录用户点击点位会在点位附近打开店铺详情信息卡片，点击地图空白处或关闭按钮即可关闭。
       </p>
     </main>
   );

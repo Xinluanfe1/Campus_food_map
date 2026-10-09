@@ -5,7 +5,12 @@ import type {
   CampusSummary,
   HealthData,
   PagedData,
+  PendingShopItem,
+  ShopDetailData,
+  ShopPhotoUploadResult,
   ShopPointsData,
+  ShopSubmitPayload,
+  MyShopItem,
   UserPublic,
 } from "../types/api";
 
@@ -147,5 +152,49 @@ export function uploadCampusMap(file: File): Promise<ApiResponse<CampusMapUpload
   return request<CampusMapUploadResult>("/admin/uploads/campus-map", {
     method: "POST",
     formData,
+  });
+}
+
+export function fetchShopDetail(campusId: string, shopId: number): Promise<ApiResponse<ShopDetailData>> {
+  return request<ShopDetailData>(
+    `/campuses/${encodeURIComponent(campusId)}/shops/${shopId}`,
+  );
+}
+
+export function createShop(
+  campusId: string,
+  payload: ShopSubmitPayload,
+): Promise<ApiResponse<ShopDetailData>> {
+  return request<ShopDetailData>(`/campuses/${encodeURIComponent(campusId)}/shops`, {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function fetchMyShops(): Promise<ApiResponse<PagedData<MyShopItem>>> {
+  return request<PagedData<MyShopItem>>("/users/me/shops");
+}
+
+export function uploadShopPhoto(file: File): Promise<ApiResponse<ShopPhotoUploadResult>> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return request<ShopPhotoUploadResult>("/uploads/shop-photo", { method: "POST", formData });
+}
+
+export function fetchPendingShops(): Promise<ApiResponse<PagedData<PendingShopItem>>> {
+  return request<PagedData<PendingShopItem>>("/admin/shops/pending");
+}
+
+export function approveShop(shopId: number): Promise<ApiResponse<Record<string, unknown>>> {
+  return request<Record<string, unknown>>(`/admin/shops/${shopId}/approve`, { method: "POST" });
+}
+
+export function rejectShop(
+  shopId: number,
+  reason: string,
+): Promise<ApiResponse<Record<string, unknown>>> {
+  return request<Record<string, unknown>>(`/admin/shops/${shopId}/reject`, {
+    method: "POST",
+    body: { reason },
   });
 }

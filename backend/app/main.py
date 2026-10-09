@@ -14,6 +14,8 @@ from app.api.assets import router as assets_router
 from app.api.auth import router as auth_router
 from app.api.campuses import router as campuses_router
 from app.api.health import router as health_router
+from app.api.shops import router as shops_router
+from app.api.uploads import router as uploads_router
 from app.api.users import router as users_router
 from app.core.config import settings
 from app.core.csrf import CsrfProtectionMiddleware
@@ -49,6 +51,8 @@ app.include_router(users_router, prefix=settings.api_prefix)
 app.include_router(admin_router, prefix=settings.api_prefix)
 app.include_router(campuses_router, prefix=settings.api_prefix)
 app.include_router(admin_campuses_router, prefix=settings.api_prefix)
+app.include_router(shops_router, prefix=settings.api_prefix)
+app.include_router(uploads_router, prefix=settings.api_prefix)
 app.include_router(assets_router)
 
 
