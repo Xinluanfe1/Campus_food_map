@@ -147,6 +147,7 @@ npm run dev
 .\.venv\Scripts\python.exe -m app.db.import_campuses
 ```
 
+- 演示校园：`config/campuses/swjtu_xipu.json`（图片底图模式，页面默认校园）与 `config/campuses/demo_real.json`（真实地图模式，用于验证瓦片源、署名与校园切换）。`demo_real` 使用 OpenStreetMap 公共瓦片服务，公网部署前必须确认其使用政策与流量限制。
 - 演示底图：`data/maps/swjtu_xipu.png` 为虚构示意图，可用 `backend\.venv\Scripts\python.exe scripts\generate_demo_map.py` 重新生成；正式公开前必须替换为经过授权的真实底图。
 - 公开接口：`GET /api/v1/campuses`、`GET /api/v1/campuses/{campus_id}/map`、`GET /api/v1/campuses/{campus_id}/shops/points`，游客可访问，点位接口只返回展示点位所需的最小字段。
 - 管理员接口：`POST /api/v1/admin/campuses`、`PATCH /api/v1/admin/campuses/{campus_id}`、`PUT /api/v1/admin/campuses/{campus_id}/map`、`POST /api/v1/admin/uploads/campus-map`；管理员登录后也可以在地图页点击“地图配置”直接在界面上修改。
@@ -158,6 +159,18 @@ npm run dev
 
 - 2026-10-09 将 Vite 从 6.0.3 升级到 6.4.4、React Router DOM 从 6.28.0 升级到 6.30.6，用于修复 npm 安全公告（同大版本升级，技术栈不变）。
 - `npm audit` 仍报告 React Router 的 2 个中危问题（开放重定向、SSR hydration），目前只在 7.x 大版本修复。本项目未使用 SSR，也没有把用户输入直接作为跳转地址；是否升级到 React Router 7 待确认。
+
+## 当前功能限制
+
+- 地图工具栏的搜索框对登录用户可见但暂不可用，搜索功能在第七步实现。
+- 登录用户点击点位目前只显示“已选中”中文提示，完整的店铺详情接口与地图锚定信息卡片在第五步实现；游客点击点位只提示登录，不请求任何详情数据。
+- 贡献榜、评价互动、举报处理、备份恢复等功能属于后续步骤，尚未实现。
+
+## 待确认事项
+
+1. **校园范围字段**：为满足开发文档“真实地图的校外范围控制不能只依赖前端视野，后端公开点位查询也必须执行范围过滤”的要求，`campuses` 表新增了可选字段 `boundary_radius_meters`（迁移 `20261009_0002`，已记录在数据库字典）。如需改用多边形边界或其他方案，请在开始第五步前说明。
+2. **React Router 版本**：`npm audit` 提示的 2 个中危问题只能在 React Router 7.x（大版本）修复，当前保持 6.30.6；确认后再升级。
+3. **演示数据与底图**：`data/maps/swjtu_xipu.png` 为虚构示意图，`demo_real` 使用 OpenStreetMap 公共瓦片服务；正式公开部署前必须替换为经过授权的底图与瓦片服务。
 
 ## 测试与构建
 
