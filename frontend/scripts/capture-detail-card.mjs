@@ -178,7 +178,9 @@ async function main() {
     });
   }
 
-  if (markerInfo && !SEARCH_KEYWORD) {
+  const SKIP_MARKER_CLICK = process.env.CFM_SKIP_CLICK === "1";
+
+  if (markerInfo && !SEARCH_KEYWORD && !SKIP_MARKER_CLICK) {
     await clickAt(markerInfo.x, markerInfo.y);
   }
 
@@ -243,7 +245,7 @@ async function main() {
   console.log("点击后立即状态：", JSON.stringify(immediate.result.value));
 
   // 再次点击同一个点位应当关闭卡片；点击地图空白区域则不应关闭
-  if (markerInfo && !SEARCH_KEYWORD) {
+  if (markerInfo && !SEARCH_KEYWORD && !SKIP_MARKER_CLICK) {
     await clickAt(markerInfo.x, markerInfo.y);
     await sleep(600);
     const afterToggle = await client.send("Runtime.evaluate", {
