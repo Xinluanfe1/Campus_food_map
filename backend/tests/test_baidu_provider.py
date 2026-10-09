@@ -122,22 +122,22 @@ def test_admin_can_switch_campus_to_baidu_provider(
     assert data["default_latitude"] == 30.7503
 
 
-def test_baidu_ak_is_null_when_not_configured(client: TestClient, engine: Engine) -> None:
+def test_baidu_ak_is_null_when_not_configured(
+    client: TestClient, engine: Engine, monkeypatch
+) -> None:
     """部署环境未提供 AK 时，接口返回 None，由前端给出中文提示。"""
 
     create_admin(engine)
     create_image_campus(engine)
     login_admin(client)
-    monkeypatch_target = settings.baidu_map_ak
-    settings.baidu_map_ak = None
-    try:
-        client.put(
-            "/api/v1/admin/campuses/provider_campus/map",
-            json=baidu_payload(),
-            headers=csrf_headers(client),
-        )
-    finally:
-        settings.baidu_map_ak = monkeypatch_target
+    # 使用 monkeypatch 临时清空 AK，保证该用例不受部署环境是否配置 AK 的影响
+    monkeypatch.setattr(settings, "baidu_map_ak", None)
+
+    client.put(
+        "/api/v1/admin/campuses/provider_campus/map",
+        json=baidu_payload(),
+        headers=csrf_headers(client),
+    )
 
     data = client.get("/api/v1/campuses/provider_campus/map").json()["data"]
     assert data["map_provider"] == "baidu"
