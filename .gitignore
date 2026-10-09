@@ -244,6 +244,9 @@ backups/
 # 本地调试启动脚本记录的进程号
 .localtest.pids
 
+# 本地记录需要修改内容的清单（仅本机使用，不进入版本库）
+/bug.md
+
 # 编辑器与系统文件
 .vscode/
 .DS_Store
