@@ -11,6 +11,11 @@ export default defineConfig({
         target: "http://127.0.0.1:8000",
         changeOrigin: true,
       },
+      // 校园底图由后端提供，开发环境通过代理访问，保证 map_asset_url 使用相对路径。
+      "/assets": {
+        target: "http://127.0.0.1:8000",
+        changeOrigin: true,
+      },
     },
   },
 });

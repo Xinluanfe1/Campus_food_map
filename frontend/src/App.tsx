@@ -1,8 +1,8 @@
 import { Link, Route, Routes } from "react-router-dom";
 
 import AppHeader from "./components/AppHeader";
-import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
+import MapPage from "./pages/MapPage";
 import RegisterPage from "./pages/RegisterPage";
 import "./styles.css";
 
@@ -11,7 +11,7 @@ export default function App() {
     <div className="app">
       <AppHeader />
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<MapPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route

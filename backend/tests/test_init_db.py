@@ -41,7 +41,7 @@ def test_init_database_writes_expected_demo_data(tmp_path) -> None:
 
         with Session(engine) as session:
             version = session.scalar(text("SELECT version_num FROM alembic_version"))
-            assert version == "20261009_0001"
+            assert version == "20261009_0002"
 
             admin = session.scalar(select(User).where(User.role == "admin"))
             assert admin is not None

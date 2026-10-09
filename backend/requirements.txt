@@ -18,7 +18,9 @@ pycparser==3.1
 pydantic==2.14.0
 pydantic_core==2.50.0
 pydantic-settings==2.15.0
+pillow==12.3.0
 python-dotenv==1.2.4
+python-multipart==0.0.32
 SQLAlchemy==2.1.4
 starlette==1.7.0
 typing-inspection==0.4.4

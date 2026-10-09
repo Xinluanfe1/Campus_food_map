@@ -1,4 +1,13 @@
-import type { ApiResponse, HealthData, UserPublic } from "../types/api";
+import type {
+  ApiResponse,
+  CampusMapConfig,
+  CampusMapUploadResult,
+  CampusSummary,
+  HealthData,
+  PagedData,
+  ShopPointsData,
+  UserPublic,
+} from "../types/api";
 
 const API_BASE = "/api/v1";
 const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
@@ -28,13 +37,14 @@ function readCookie(name: string): string | null {
 interface RequestOptions {
   method?: string;
   body?: unknown;
+  formData?: FormData;
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
   const method = options.method ?? "GET";
   const headers: Record<string, string> = { Accept: "application/json" };
 
-  if (options.body !== undefined) {
+  if (options.body !== undefined && options.formData === undefined) {
     headers["Content-Type"] = "application/json";
   }
   if (UNSAFE_METHODS.has(method)) {
@@ -48,7 +58,9 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<A
     method,
     headers,
     credentials: "include",
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    body:
+      options.formData ??
+      (options.body === undefined ? undefined : JSON.stringify(options.body)),
   });
 
   let payload: ApiResponse<T> | null = null;
@@ -89,4 +101,51 @@ export function loginAccount(username: string, password: string): Promise<ApiRes
 
 export function logoutAccount(): Promise<ApiResponse<null>> {
   return request<null>("/auth/logout", { method: "POST" });
+}
+
+export function fetchCampuses(): Promise<ApiResponse<PagedData<CampusSummary>>> {
+  return request<PagedData<CampusSummary>>("/campuses");
+}
+
+export function fetchCampusMap(campusId: string): Promise<ApiResponse<CampusMapConfig>> {
+  return request<CampusMapConfig>(`/campuses/${encodeURIComponent(campusId)}/map`);
+}
+
+export function fetchShopPoints(campusId: string): Promise<ApiResponse<ShopPointsData>> {
+  return request<ShopPointsData>(`/campuses/${encodeURIComponent(campusId)}/shops/points`);
+}
+
+export interface CampusMapUpdatePayload {
+  map_type: string;
+  map_asset_url: string | null;
+  tile_url_template: string | null;
+  map_attribution: string | null;
+  allow_off_campus: boolean;
+  image_width: number | null;
+  image_height: number | null;
+  default_map_x: number | null;
+  default_map_y: number | null;
+  default_latitude: number | null;
+  default_longitude: number | null;
+  default_zoom: number;
+  boundary_radius_meters: number | null;
+}
+
+export function updateCampusMap(
+  campusId: string,
+  payload: CampusMapUpdatePayload,
+): Promise<ApiResponse<CampusMapConfig>> {
+  return request<CampusMapConfig>(`/admin/campuses/${encodeURIComponent(campusId)}/map`, {
+    method: "PUT",
+    body: payload,
+  });
+}
+
+export function uploadCampusMap(file: File): Promise<ApiResponse<CampusMapUploadResult>> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return request<CampusMapUploadResult>("/admin/uploads/campus-map", {
+    method: "POST",
+    formData,
+  });
 }

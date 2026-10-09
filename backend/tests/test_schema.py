@@ -97,7 +97,7 @@ def test_alembic_revision_is_applied(engine: Engine) -> None:
 
     with engine.connect() as connection:
         version = connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
-    assert version == "20261009_0001"
+    assert version == "20261009_0002"
 
 
 def test_sqlite_foreign_keys_enabled(engine: Engine) -> None:

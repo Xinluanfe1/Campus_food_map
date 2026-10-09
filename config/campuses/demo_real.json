@@ -1,0 +1,18 @@
+{
+  "campus_id": "demo_real",
+  "campus_name": "真实地图演示校园",
+  "map_type": "real",
+  "map_asset_url": null,
+  "tile_url_template": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+  "map_attribution": "地图数据 © OpenStreetMap 贡献者",
+  "allow_off_campus": false,
+  "image_width": null,
+  "image_height": null,
+  "default_map_x": null,
+  "default_map_y": null,
+  "default_latitude": 30.7503,
+  "default_longitude": 103.9857,
+  "default_zoom": 16,
+  "boundary_radius_meters": 1500,
+  "is_active": true
+}

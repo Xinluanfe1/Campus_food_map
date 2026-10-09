@@ -18,23 +18,25 @@
 
 ## 当前进度
 
-第一至三步已于 2026-10-09 完成并通过验收，当前项目包括：
+第一至四步已于 2026-10-09 完成并通过验收，当前项目包括：
 
-- 前端：React + TypeScript + Vite 工程，包含地图首页骨架、登录页、注册页与全局登录状态管理，并可以调用后端接口。
-- 后端：FastAPI 应用，提供健康检查、注册、登录、退出、当前用户信息等接口，启动与测试均正常。
+- 前端：React + TypeScript + Vite + Leaflet 工程，包含可运行的地图主页（图片底图与真实地图两种模式）、登录页、注册页与全局登录状态管理。
+- 后端：FastAPI 应用，提供健康检查、注册登录、校园地图配置、公开点位查询、底图上传等接口，启动与测试均正常。
+- 地图与校园：校园配置可通过配置文件导入数据库；支持归一化坐标的图片底图、可配置瓦片源的真实地图、地图署名、校外范围过滤与管理员地图配置界面。
 - 认证与权限：JWT + HttpOnly Cookie 登录状态、CSRF 双提交防护、登录注册频率限制、普通用户与管理员角色校验。
 - 数据库：SQLite + SQLAlchemy 模型 + Alembic 迁移，包含 `campuses`、`users`、`shops`、`reviews`、`review_reactions`、`review_replies`、`reports` 七张业务表，配套中文数据字典与演示数据初始化脚本。
 - 配置：`backend/.env.example` 环境变量示例、`config/campuses/swjtu_xipu.json` 示例校园配置。
 - 依赖版本已固定：后端见 `backend/requirements.txt`，前端见 `frontend/package-lock.json`。
 
-下一步：第四步“实现地图和校园配置”。
+下一步：第五步“实现店铺提交、审核和详情”。
 
 ## 目录结构
 
 ```text
 校园美食地图/
-├── frontend/            前端工程（React + TypeScript + Vite）
+├── frontend/            前端工程（React + TypeScript + Vite + Leaflet）
 │   ├── public/          静态资源
+│   ├── scripts/         前端自检脚本（地图坐标换算校验）
 │   └── src/
 │       ├── api/         后端接口调用
 │       ├── auth/        登录状态管理
@@ -54,7 +56,7 @@
 │   │   └── services/    业务逻辑
 │   ├── migrations/      数据库迁移脚本
 │   └── tests/           后端自动化测试
-├── data/                本地数据目录（地图、店铺照片、SQLite 数据库文件）
+├── data/                本地数据目录（data/maps 存放校园底图，另含店铺照片与 SQLite 数据库文件）
 ├── config/campuses/     校园配置
 ├── docs/                项目文档（数据库字典等）
 ├── scripts/             本地脚本（后续步骤补充）
@@ -136,6 +138,27 @@ npm run dev
 - 权限规则：未登录访问受保护接口返回 401，普通用户访问管理员接口返回 403；管理员只能通过初始化脚本或 `python -m app.db.create_admin` 创建，注册接口不允许提交角色字段。
 - 生产环境（`APP_ENV=production`）会自动关闭 `/docs` 交互式文档并要求配置 `JWT_SECRET`；HTTPS 部署时请把 `COOKIE_SECURE` 设为 `true`。
 
+## 地图与校园配置
+
+- 两种底图模式：图片底图使用 Leaflet `CRS.Simple` 与归一化坐标（`map_x`、`map_y` 为 0 至 1）；真实地图使用可配置的瓦片地址模板、署名与经纬度中心。
+- 校园配置文件：`config/campuses/*.json`，导入命令（在 `backend` 目录执行）：
+
+```powershell
+.\.venv\Scripts\python.exe -m app.db.import_campuses
+```
+
+- 演示底图：`data/maps/swjtu_xipu.png` 为虚构示意图，可用 `backend\.venv\Scripts\python.exe scripts\generate_demo_map.py` 重新生成；正式公开前必须替换为经过授权的真实底图。
+- 公开接口：`GET /api/v1/campuses`、`GET /api/v1/campuses/{campus_id}/map`、`GET /api/v1/campuses/{campus_id}/shops/points`，游客可访问，点位接口只返回展示点位所需的最小字段。
+- 管理员接口：`POST /api/v1/admin/campuses`、`PATCH /api/v1/admin/campuses/{campus_id}`、`PUT /api/v1/admin/campuses/{campus_id}/map`、`POST /api/v1/admin/uploads/campus-map`；管理员登录后也可以在地图页点击“地图配置”直接在界面上修改。
+- 底图校验：仅允许 PNG、JPEG、WebP，扩展名必须与真实格式一致，单文件不超过 5 MB，宽高介于 200 至 8000 像素；文件通过 `/assets/maps/{文件名}` 访问，且只有被校园配置引用时才可读取。
+- 校外范围过滤：校园可通过 `boundary_radius_meters` 配置范围半径；`allow_off_campus` 为 `false` 时后端会过滤半径以外的真实地图店铺（该字段是为满足文档“后端范围过滤”要求新增，已记录在数据库字典）。
+- 更换校园：新增配置文件并执行导入脚本即可，无需修改前端或后端代码。
+
+## 依赖安全说明
+
+- 2026-10-09 将 Vite 从 6.0.3 升级到 6.4.4、React Router DOM 从 6.28.0 升级到 6.30.6，用于修复 npm 安全公告（同大版本升级，技术栈不变）。
+- `npm audit` 仍报告 React Router 的 2 个中危问题（开放重定向、SSR hydration），目前只在 7.x 大版本修复。本项目未使用 SSR，也没有把用户输入直接作为跳转地址；是否升级到 React Router 7 待确认。
+
 ## 测试与构建
 
 ```powershell
@@ -192,3 +215,21 @@ npm run build
 | 错误提示全部使用中文 | 通过（接口错误、输入校验错误与页面提示均为中文） |
 
 第三步自动化测试 31 项全部通过（含认证与权限 14 项）；前端类型检查与生产构建通过；端到端联调（注册 → 登录 → 获取当前用户 → 缺少 CSRF 被拒 → 退出 → 退出后 401）通过。
+
+## 第四步验收结果
+
+| 验收标准 | 结果 |
+| --- | --- |
+| 默认校园可从配置中读取 | 通过（`config/campuses/*.json` 导入数据库后由接口读取，代码未写死校园） |
+| 图片底图可以正常显示 | 通过（无头浏览器实际渲染截图确认，底图与缩放控件正常） |
+| 店铺点位位置与归一化坐标一致 | 通过（9 个已审核点位与底图标注位置完全对齐） |
+| 图片尺寸改变后点位比例位置保持正确 | 通过（坐标换算自检：3 组点位 × 3 种图片尺寸的相对位置完全一致） |
+| 真实地图模式可以通过配置使用合规瓦片源 | 通过（演示校园使用 OpenStreetMap 瓦片，实际渲染成功并显示署名） |
+| 更换底图不需要修改业务代码 | 通过（管理员上传 + 配置接口 + 配置文件导入，均不改代码） |
+| 校园配置可以决定是否显示校外店铺 | 通过（距离过滤与 `allow_off_campus` 开关均有自动化测试） |
+| 后端公开点位接口不返回待审核店铺 | 通过（10 家演示店铺仅返回 9 家已审核店铺） |
+| 游客可以查看地图和公开点位 | 通过（公开接口无需登录，未登录状态页面正常展示） |
+| 游客点击点位后不能读取详情 API | 通过（游客点击只提示登录；点位接口仅返回名称、类型与坐标，不含简介、照片与评价） |
+| 图片模式与真实地图模式不会混淆坐标体系 | 通过（按校园底图类型只返回对应坐标字段，自动化测试覆盖） |
+
+第四步新增自动化测试 15 项（校园配置、点位隔离、范围过滤、配置校验、权限、底图上传与校验），后端测试总数 46 项全部通过；前端类型检查与生产构建通过；图片与真实地图两种模式均已实际渲染验证。

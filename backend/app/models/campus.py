@@ -78,6 +78,11 @@ class Campus(Base):
         Float, nullable=True, comment="真实地图默认中心经度（-180 至 180）"
     )
     default_zoom: Mapped[float] = mapped_column(Float, nullable=False, default=1.0, comment="默认缩放级别")
+    boundary_radius_meters: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
+        comment="真实地图校园范围半径（米），可为空；为空时后端不做范围过滤",
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, comment="是否允许正常访问")
     created_at: Mapped[datetime] = mapped_column(
         UTCDateTime, nullable=False, default=utc_now, comment="创建时间（UTC）"
