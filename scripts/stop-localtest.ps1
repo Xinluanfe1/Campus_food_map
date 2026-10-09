@@ -75,6 +75,11 @@ foreach ($process in Get-CimInstance Win32_Process -ErrorAction SilentlyContinue
 # 会继续运行并占用端口，其命令行特征为 --multiprocessing-fork 且父进程已不存在。
 foreach ($process in Get-CimInstance Win32_Process -Filter "Name = 'python.exe'" -ErrorAction SilentlyContinue) {
     if (-not $process.CommandLine) { continue }
+    # 命令行包含本部署目录的 Python 进程（uvicorn 主进程及其子进程）全部结束
+    if ($process.CommandLine -like "*$root*") {
+        $targets.Add([int]$process.ProcessId)
+        continue
+    }
     if ($process.CommandLine -notmatch "multiprocessing-fork") { continue }
     $parent = Get-CimInstance Win32_Process -Filter "ProcessId = $($process.ParentProcessId)" -ErrorAction SilentlyContinue
     if (-not $parent) {
