@@ -5,10 +5,13 @@ from collections.abc import Iterator
 import pytest
 from alembic import command
 from alembic.config import Config
+from fastapi.testclient import TestClient
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
-from app.db.session import BACKEND_DIR, create_db_engine
+from app.core.rate_limit import reset_rate_limits
+from app.db.session import BACKEND_DIR, create_db_engine, get_session
+from app.main import app
 
 
 def migrate_database(database_url: str) -> None:
@@ -52,3 +55,26 @@ def session(engine: Engine) -> Iterator[Session]:
 
     with Session(engine) as test_session:
         yield test_session
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiter() -> Iterator[None]:
+    """每个测试前后清空内存频率限制，避免测试之间相互影响。"""
+
+    reset_rate_limits()
+    yield
+    reset_rate_limits()
+
+
+@pytest.fixture()
+def client(engine: Engine) -> Iterator[TestClient]:
+    """使用独立测试数据库的接口客户端。"""
+
+    def override_get_session() -> Iterator[Session]:
+        with Session(engine) as test_session:
+            yield test_session
+
+    app.dependency_overrides[get_session] = override_get_session
+    with TestClient(app) as test_client:
+        yield test_client
+    app.dependency_overrides.clear()

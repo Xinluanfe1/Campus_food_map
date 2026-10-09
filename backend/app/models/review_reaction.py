@@ -2,10 +2,10 @@
 
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, String, UniqueConstraint
+from sqlalchemy import CheckConstraint, ForeignKey, Index, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, utc_now
+from app.db.base import Base, UTCDateTime, utc_now
 
 
 class ReviewReaction(Base):
@@ -36,8 +36,8 @@ class ReviewReaction(Base):
         String(10), nullable=False, comment="互动类型：like（点赞）或 dislike（点踩）"
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=utc_now, comment="创建时间（UTC）"
+        UTCDateTime, nullable=False, default=utc_now, comment="创建时间（UTC）"
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now, comment="更新时间（UTC）"
+        UTCDateTime, nullable=False, default=utc_now, onupdate=utc_now, comment="更新时间（UTC）"
     )

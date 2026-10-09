@@ -18,15 +18,16 @@
 
 ## 当前进度
 
-第一、二步已于 2026-10-09 完成并通过验收，当前项目包括：
+第一至三步已于 2026-10-09 完成并通过验收，当前项目包括：
 
-- 前端：React + TypeScript + Vite 工程，提供第一阶段的骨架页面，并可以调用后端健康检查接口。
-- 后端：FastAPI 应用，提供健康检查接口 `GET /api/v1/health`，启动与测试均正常。
+- 前端：React + TypeScript + Vite 工程，包含地图首页骨架、登录页、注册页与全局登录状态管理，并可以调用后端接口。
+- 后端：FastAPI 应用，提供健康检查、注册、登录、退出、当前用户信息等接口，启动与测试均正常。
+- 认证与权限：JWT + HttpOnly Cookie 登录状态、CSRF 双提交防护、登录注册频率限制、普通用户与管理员角色校验。
 - 数据库：SQLite + SQLAlchemy 模型 + Alembic 迁移，包含 `campuses`、`users`、`shops`、`reviews`、`review_reactions`、`review_replies`、`reports` 七张业务表，配套中文数据字典与演示数据初始化脚本。
 - 配置：`backend/.env.example` 环境变量示例、`config/campuses/swjtu_xipu.json` 示例校园配置。
 - 依赖版本已固定：后端见 `backend/requirements.txt`，前端见 `frontend/package-lock.json`。
 
-下一步：第三步“实现注册、登录和权限”。
+下一步：第四步“实现地图和校园配置”。
 
 ## 目录结构
 
@@ -36,6 +37,7 @@
 │   ├── public/          静态资源
 │   └── src/
 │       ├── api/         后端接口调用
+│       ├── auth/        登录状态管理
 │       ├── components/  可复用组件
 │       ├── hooks/       自定义组合式函数
 │       ├── pages/       页面组件
@@ -44,7 +46,7 @@
 ├── backend/             后端工程（FastAPI）
 │   ├── alembic.ini      Alembic 迁移配置
 │   ├── app/
-│   │   ├── api/         API 路由
+│   │   ├── api/         API 路由与权限依赖
 │   │   ├── core/        配置与安全
 │   │   ├── db/          数据库连接、会话与初始化脚本
 │   │   ├── models/      SQLAlchemy 数据模型
@@ -125,6 +127,15 @@ npm run dev
 - 示例店铺的名称、简介与坐标均为虚构演示数据，正式公开前必须替换为经过核实的数据。
 - 完整字段、约束与删除策略见 [数据库字典](./docs/数据库字典.md)。
 
+## 认证与安全
+
+- 认证方式：登录成功后由后端签发 JWT 并写入 HttpOnly Cookie，前端不读取认证 Cookie；会话默认有效期 24 小时（`ACCESS_TOKEN_EXPIRE_MINUTES`）。
+- JWT 密钥：优先读取环境变量 `JWT_SECRET`。开发环境未配置时使用进程内临时密钥（重启后端后需要重新登录）；生产环境未配置会直接拒绝启动。
+- CSRF 防护：采用双提交 Cookie 方案。前端从可读的 `csrf_token` Cookie 取值，并在所有写操作中通过 `X-CSRF-Token` 请求头回传；注册与登录接口没有登录状态，不参与校验。
+- 频率限制：注册每个来源 15 分钟最多 5 次，登录 5 分钟最多 10 次，超出返回 429 中文提示（单实例内存实现，多实例部署需改用共享存储方案）。
+- 权限规则：未登录访问受保护接口返回 401，普通用户访问管理员接口返回 403；管理员只能通过初始化脚本或 `python -m app.db.create_admin` 创建，注册接口不允许提交角色字段。
+- 生产环境（`APP_ENV=production`）会自动关闭 `/docs` 交互式文档并要求配置 `JWT_SECRET`；HTTPS 部署时请把 `COOKIE_SECURE` 设为 `true`。
+
 ## 测试与构建
 
 ```powershell
@@ -164,3 +175,20 @@ npm run build
 | 不使用前端 JSON 代替正式数据库 | 通过（店铺、评价等业务数据全部入库；前端仅保留校园配置文件） |
 
 数据库结构与初始化测试：17 项全部通过（`backend/tests/test_schema.py`、`backend/tests/test_init_db.py`）。
+
+## 第三步验收结果
+
+| 验收标准 | 结果 |
+| --- | --- |
+| 可以注册普通账号 | 通过（`POST /api/v1/auth/register`，注册用户固定为 `user` 角色） |
+| 重复用户名被拒绝 | 通过（返回 409 与中文提示） |
+| 数据库不保存明文密码 | 通过（Argon2id 哈希存储，接口响应不包含密码字段） |
+| 可以正常登录和退出 | 通过（登录写入 HttpOnly Cookie，退出清除登录状态并支持 CSRF 校验） |
+| 登录后能够获取当前用户信息 | 通过（`GET /api/v1/auth/me`） |
+| 未登录用户调用受保护接口时返回 401 | 通过（`/auth/me`、`/users/me/shops` 等） |
+| 普通用户调用管理员接口时返回 403 | 通过（`GET /api/v1/admin/shops/pending`） |
+| 普通用户无法通过修改请求参数获得管理员权限 | 通过（注册请求携带额外字段直接 422；使用错误密钥伪造的 JWT 被拒绝） |
+| 用户无需头像、邮箱或手机号即可使用系统 | 通过（注册只需用户名和密码） |
+| 错误提示全部使用中文 | 通过（接口错误、输入校验错误与页面提示均为中文） |
+
+第三步自动化测试 31 项全部通过（含认证与权限 14 项）；前端类型检查与生产构建通过；端到端联调（注册 → 登录 → 获取当前用户 → 缺少 CSRF 被拒 → 退出 → 退出后 401）通过。

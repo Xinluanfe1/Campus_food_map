@@ -2,10 +2,10 @@
 
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, Float, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import CheckConstraint, Float, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, utc_now
+from app.db.base import Base, UTCDateTime, utc_now
 
 
 class Shop(Base):
@@ -72,14 +72,14 @@ class Shop(Base):
         comment="审核管理员 ID（外键：users.id，可为空）",
     )
     reviewed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, comment="审核时间（UTC，可为空）"
+        UTCDateTime, nullable=True, comment="审核时间（UTC，可为空）"
     )
     rejection_reason: Mapped[str | None] = mapped_column(
         String(500), nullable=True, comment="拒绝原因（被拒绝时必填）"
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=utc_now, comment="创建时间（UTC）"
+        UTCDateTime, nullable=False, default=utc_now, comment="创建时间（UTC）"
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now, comment="更新时间（UTC）"
+        UTCDateTime, nullable=False, default=utc_now, onupdate=utc_now, comment="更新时间（UTC）"
     )

@@ -2,10 +2,10 @@
 
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Text, text
+from sqlalchemy import CheckConstraint, ForeignKey, Index, Integer, String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, utc_now
+from app.db.base import Base, UTCDateTime, utc_now
 
 
 class Report(Base):
@@ -51,9 +51,9 @@ class Report(Base):
         comment="处理管理员 ID（外键：users.id，可为空）",
     )
     handled_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, comment="处理时间（UTC，可为空）"
+        UTCDateTime, nullable=True, comment="处理时间（UTC，可为空）"
     )
     handling_note: Mapped[str | None] = mapped_column(Text, nullable=True, comment="处理备注，可为空")
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=utc_now, comment="举报时间（UTC）"
+        UTCDateTime, nullable=False, default=utc_now, comment="举报时间（UTC）"
     )

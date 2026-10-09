@@ -2,10 +2,10 @@
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, Float, Integer, String
+from sqlalchemy import Boolean, CheckConstraint, Float, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, utc_now
+from app.db.base import Base, UTCDateTime, utc_now
 
 
 class Campus(Base):
@@ -80,8 +80,8 @@ class Campus(Base):
     default_zoom: Mapped[float] = mapped_column(Float, nullable=False, default=1.0, comment="默认缩放级别")
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, comment="是否允许正常访问")
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=utc_now, comment="创建时间（UTC）"
+        UTCDateTime, nullable=False, default=utc_now, comment="创建时间（UTC）"
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now, comment="更新时间（UTC）"
+        UTCDateTime, nullable=False, default=utc_now, onupdate=utc_now, comment="更新时间（UTC）"
     )
