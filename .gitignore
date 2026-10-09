@@ -218,3 +218,27 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ==== 校园美食地图项目补充规则 ====
+
+# 前端依赖与构建产物
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# 环境变量示例文件需要保留
+!.env.example
+
+# 数据库文件（SQLite）
+*.db
+*.sqlite
+*.sqlite3
+data/campus_food.db
+
+# 用户上传的店铺照片
+data/shop_photos/
+
+# 编辑器与系统文件
+.vscode/
+.DS_Store
+Thumbs.db
