@@ -60,22 +60,26 @@ export default function RankingPage() {
       <p className="subtitle">按加权评分排序，只统计有效评价；无有效评价的店铺不参与排名。</p>
 
       <div className="ranking-filters">
-        <label className="toolbar-item">
-          当前校园
-          <select
-            value={campusId}
-            onChange={(event) => {
-              setCampusId(event.target.value);
-              setPage(1);
-            }}
-          >
-            {campusList.map((campus) => (
-              <option key={campus.campus_id} value={campus.campus_id}>
-                {campus.campus_name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <span className="toolbar-item">
+          当前校园：
+          {campusList.length > 1 ? (
+            <select
+              value={campusId}
+              onChange={(event) => {
+                setCampusId(event.target.value);
+                setPage(1);
+              }}
+            >
+              {campusList.map((campus) => (
+                <option key={campus.campus_id} value={campus.campus_id}>
+                  {campus.campus_name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <strong>{campusList[0]?.campus_name ?? "加载中……"}</strong>
+          )}
+        </span>
 
         <div className="admin-tabs">
           {(

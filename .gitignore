@@ -238,6 +238,9 @@ data/campus_food.db
 # 用户上传的店铺照片
 data/shop_photos/
 
+# 备份文件
+backups/
+
 # 编辑器与系统文件
 .vscode/
 .DS_Store

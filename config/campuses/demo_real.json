@@ -14,5 +14,5 @@
   "default_longitude": 103.9857,
   "default_zoom": 16,
   "boundary_radius_meters": 1500,
-  "is_active": true
+  "is_active": false
 }

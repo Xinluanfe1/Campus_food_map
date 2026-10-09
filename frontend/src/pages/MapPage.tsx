@@ -256,19 +256,23 @@ export default function MapPage() {
   return (
     <main className="page map-page">
       <section className="map-toolbar">
-        <label className="toolbar-item">
-          当前校园
-          <select
-            value={campusId}
-            onChange={(event) => setSearchParams({ campus: event.target.value })}
-          >
-            {campusList.map((item) => (
-              <option key={item.campus_id} value={item.campus_id}>
-                {item.campus_name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <span className="toolbar-item">
+          当前校园：
+          {campusList.length > 1 ? (
+            <select
+              value={campusId}
+              onChange={(event) => setSearchParams({ campus: event.target.value })}
+            >
+              {campusList.map((item) => (
+                <option key={item.campus_id} value={item.campus_id}>
+                  {item.campus_name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <strong>{campus?.campus_name ?? campusList[0]?.campus_name ?? "加载中……"}</strong>
+          )}
+        </span>
 
         <span className="toolbar-item toolbar-muted">
           底图模式：{campus?.map_type === "real" ? "真实地图" : "图片底图"}

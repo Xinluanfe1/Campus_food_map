@@ -57,22 +57,26 @@ export default function ContributorsPage() {
       <p className="subtitle">只统计审核通过的有效店铺；待审核、被拒绝或已删除的店铺不计入贡献数量。</p>
 
       <div className="ranking-filters">
-        <label className="toolbar-item">
-          当前校园
-          <select
-            value={campusId}
-            onChange={(event) => {
-              setCampusId(event.target.value);
-              setPage(1);
-            }}
-          >
-            {campusList.map((campus) => (
-              <option key={campus.campus_id} value={campus.campus_id}>
-                {campus.campus_name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <span className="toolbar-item">
+          当前校园：
+          {campusList.length > 1 ? (
+            <select
+              value={campusId}
+              onChange={(event) => {
+                setCampusId(event.target.value);
+                setPage(1);
+              }}
+            >
+              {campusList.map((campus) => (
+                <option key={campus.campus_id} value={campus.campus_id}>
+                  {campus.campus_name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <strong>{campusList[0]?.campus_name ?? "加载中……"}</strong>
+          )}
+        </span>
       </div>
 
       {error && <p className="alert alert-error">{error}</p>}
