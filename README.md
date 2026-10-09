@@ -92,8 +92,10 @@ Copy-Item .env.example .env
 
 ```powershell
 cd frontend
-npm install
+npm.cmd install
 ```
+
+> 如果提示 `无法加载文件 ...\npm.ps1，因为在此系统上禁止运行脚本`，这是 Windows PowerShell 执行策略限制：用 `npm.cmd` 代替 `npm` 即可，或执行 `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` 后继续使用 `npm`。
 
 ## 本地启动
 
@@ -109,7 +111,7 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 ```powershell
 cd frontend
-npm run dev
+npm.cmd run dev -- --host 127.0.0.1 --port 5173
 ```
 
 启动后可以访问：
@@ -303,7 +305,7 @@ powershell -ExecutionPolicy Bypass -File scripts\start-all.ps1
 .\.venv\Scripts\python.exe -m pytest -q
 
 # 前端类型检查与生产构建（在 frontend 目录执行）
-npm run build
+npm.cmd run build
 ```
 
 ## 第一步验收结果

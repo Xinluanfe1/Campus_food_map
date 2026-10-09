@@ -1,4 +1,4 @@
-# 启动校园美食地图后端（FastAPI + Uvicorn）
+﻿# 启动校园美食地图后端（FastAPI + Uvicorn）
 #
 # 用法（在项目根目录执行）：
 #   powershell -ExecutionPolicy Bypass -File scripts\start-backend.ps1

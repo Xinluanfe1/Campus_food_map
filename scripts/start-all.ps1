@@ -1,4 +1,4 @@
-# 同时启动后端与前端（各自打开一个新的 PowerShell 窗口，便于查看日志与停止服务）
+﻿# 同时启动后端与前端（各自打开一个新的 PowerShell 窗口，便于查看日志与停止服务）
 #
 # 用法（在项目根目录执行）：
 #   powershell -ExecutionPolicy Bypass -File scripts\start-all.ps1
