@@ -6,6 +6,7 @@ from sqlalchemy import func, select
 from app.api.deps import CurrentUser, DbSession
 from app.models import Shop
 from app.schemas.shop import ShopSummary
+from app.services import ranking_service
 
 router = APIRouter(prefix="/users", tags=["用户"])
 
@@ -37,3 +38,13 @@ def list_my_shops(
             "total": total,
         },
     }
+
+
+@router.get("/me/contributions", summary="获取当前用户的贡献统计")
+def read_my_contributions(
+    current_user: CurrentUser,
+    session: DbSession,
+    campus_id: str | None = Query(None, description="指定校园时返回该校园的贡献排名"),
+) -> dict:
+    data = ranking_service.user_contribution(session, current_user, campus_id)
+    return {"success": True, "message": "获取成功", "data": data}

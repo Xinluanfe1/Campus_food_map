@@ -3,8 +3,10 @@ import { Link, Route, Routes } from "react-router-dom";
 import AppHeader from "./components/AppHeader";
 import { RequireAdmin, RequireAuth } from "./components/RouteGuards";
 import AdminPage from "./pages/AdminPage";
+import ContributorsPage from "./pages/ContributorsPage";
 import LoginPage from "./pages/LoginPage";
 import MapPage from "./pages/MapPage";
+import RankingPage from "./pages/RankingPage";
 import RegisterPage from "./pages/RegisterPage";
 import SubmitShopPage from "./pages/SubmitShopPage";
 import "./styles.css";
@@ -17,6 +19,22 @@ export default function App() {
         <Route path="/" element={<MapPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route
+          path="/rankings"
+          element={
+            <RequireAuth>
+              <RankingPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/contributors"
+          element={
+            <RequireAuth>
+              <ContributorsPage />
+            </RequireAuth>
+          }
+        />
         <Route
           path="/submit"
           element={

@@ -30,6 +30,8 @@ export default function AppHeader() {
         </Link>
         <nav className="app-nav">
           <Link to="/">地图首页</Link>
+          <Link to="/rankings">排行榜</Link>
+          <Link to="/contributors">贡献榜</Link>
           {loading ? (
             <span className="nav-muted">正在检查登录状态……</span>
           ) : user ? (

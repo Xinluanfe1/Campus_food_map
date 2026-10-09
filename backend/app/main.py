@@ -15,6 +15,7 @@ from app.api.assets import router as assets_router
 from app.api.auth import router as auth_router
 from app.api.campuses import router as campuses_router
 from app.api.health import router as health_router
+from app.api.rankings import router as rankings_router
 from app.api.reviews import router as reviews_router
 from app.api.shops import router as shops_router
 from app.api.uploads import router as uploads_router
@@ -56,6 +57,7 @@ app.include_router(admin_campuses_router, prefix=settings.api_prefix)
 app.include_router(shops_router, prefix=settings.api_prefix)
 app.include_router(uploads_router, prefix=settings.api_prefix)
 app.include_router(reviews_router, prefix=settings.api_prefix)
+app.include_router(rankings_router, prefix=settings.api_prefix)
 app.include_router(admin_reports_router, prefix=settings.api_prefix)
 app.include_router(assets_router)
 

@@ -1,7 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 
-import { fetchCampusMap, fetchCampuses, fetchShopDetail, fetchShopPoints } from "../api/client";
+import {
+  fetchCampusMap,
+  fetchCampuses,
+  fetchShopDetail,
+  fetchShopPoints,
+  searchShops,
+} from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import AdminMapPanel from "../components/AdminMapPanel";
 import FoodMap from "../components/FoodMap";
@@ -12,6 +18,7 @@ import type {
   CampusSummary,
   ShopDetailData,
   ShopPoint,
+  SearchShopItem,
   ShopTypeFilter,
 } from "../types/api";
 
@@ -35,6 +42,13 @@ export default function MapPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState("");
   const detailRequestRef = useRef(0);
+  const [keyword, setKeyword] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchShopItem[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [focusTarget, setFocusTarget] = useState<{ id: number; token: number } | null>(null);
+  const shopParamHandledRef = useRef<number | null>(null);
   const health = useHealthStatus();
 
   // 1. 读取校园列表，未指定校园时默认使用第一个可公开访问的校园。
@@ -170,6 +184,68 @@ export default function MapPage() {
     }
   }, [campusId, selectedPoint]);
 
+  /** 排行榜点击后带着 ?shop= 参数跳转过来：自动打开对应店铺的详情卡片。 */
+  useEffect(() => {
+    const shopParam = searchParams.get("shop");
+    if (!shopParam || points.length === 0) {
+      return;
+    }
+    const shopId = Number(shopParam);
+    if (!Number.isFinite(shopId) || shopParamHandledRef.current === shopId) {
+      return;
+    }
+    const point = points.find((candidate) => candidate.id === shopId);
+    if (!point) {
+      return;
+    }
+    shopParamHandledRef.current = shopId;
+    setFocusTarget((previous) => ({ id: shopId, token: (previous?.token ?? 0) + 1 }));
+    handleSelectPoint(point);
+  }, [handleSelectPoint, points, searchParams]);
+
+  async function handleSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const text = keyword.trim();
+    setSearchError("");
+    setShowSearchResults(true);
+
+    if (!text) {
+      setSearchResults([]);
+      setSearchError("请输入搜索关键词。");
+      return;
+    }
+    if (!campusId) {
+      setSearchResults([]);
+      setSearchError("请先选择校园。");
+      return;
+    }
+
+    setSearching(true);
+    try {
+      const response = await searchShops(campusId, text);
+      setSearchResults(response.data.items);
+    } catch (caught) {
+      setSearchResults([]);
+      setSearchError(caught instanceof Error ? caught.message : "搜索失败，请稍后重试。");
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  function handleSelectSearchResult(item: SearchShopItem) {
+    const point = points.find((candidate) => candidate.id === item.id);
+    setShowSearchResults(false);
+    setKeyword("");
+    if (!point) {
+      setNotice(`“${item.name}”在当前校园地图上暂时没有可用的点位信息。`);
+      return;
+    }
+    setFocusTarget((previous) => ({ id: point.id, token: (previous?.token ?? 0) + 1 }));
+    if (selectedPoint?.id !== point.id) {
+      handleSelectPoint(point);
+    }
+  }
+
   const visibleCount = useMemo(
     () =>
       points.filter((point) => shopTypeFilter === "all" || point.shop_type === shopTypeFilter)
@@ -215,11 +291,17 @@ export default function MapPage() {
         </button>
 
         {user && (
-          <input
-            className="toolbar-search"
-            placeholder="搜索美食店铺（第七步提供）"
-            disabled
-          />
+          <form className="toolbar-search-form" onSubmit={handleSearch}>
+            <input
+              className="toolbar-search"
+              placeholder="搜索店铺名称或简介"
+              value={keyword}
+              onChange={(event) => setKeyword(event.target.value)}
+            />
+            <button type="submit" disabled={searching}>
+              {searching ? "搜索中……" : "搜索"}
+            </button>
+          </form>
         )}
 
         {user?.role === "admin" && (
@@ -228,6 +310,46 @@ export default function MapPage() {
           </button>
         )}
       </section>
+
+      {user && showSearchResults && (
+        <section className="search-results">
+          <div className="search-results-header">
+            <strong>搜索结果（{searchResults.length}）</strong>
+            <button
+              type="button"
+              className="link-button"
+              onClick={() => setShowSearchResults(false)}
+            >
+              关闭
+            </button>
+          </div>
+          {searchError && <p className="alert alert-error">{searchError}</p>}
+          {!searchError && searchResults.length === 0 && (
+            <p className="hint">没有找到匹配的公开店铺。</p>
+          )}
+          <ul>
+            {searchResults.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  className="search-result-item"
+                  onClick={() => handleSelectSearchResult(item)}
+                >
+                  <span>
+                    {item.name}
+                    <span className="hint">（{item.shop_type === "vendor" ? "摊贩" : "商铺"}）</span>
+                  </span>
+                  <span className="hint">
+                    加权评分：
+                    {item.weighted_rating === null ? "暂无评分" : item.weighted_rating.toFixed(2)}
+                    · 有效评价：{item.review_count}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div className={showAdminPanel && campus ? "map-layout with-panel" : "map-layout"}>
         <div className="map-canvas">
@@ -241,6 +363,7 @@ export default function MapPage() {
               resetSignal={resetSignal}
               onSelectPoint={handleSelectPoint}
               onMapError={handleMapError}
+              focusTarget={focusTarget}
               renderOverlay={(position) => {
                 if (!position || !selectedPoint) {
                   return null;

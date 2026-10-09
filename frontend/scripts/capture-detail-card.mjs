@@ -10,6 +10,7 @@
  *
  * 可通过环境变量覆盖登录账号：
  *   CFM_LOGIN_USERNAME、CFM_LOGIN_PASSWORD
+ * 可通过 CFM_SEARCH_KEYWORD 在首页执行一次店铺搜索并截图搜索结果。
  */
 
 import { spawn } from "node:child_process";
@@ -25,6 +26,7 @@ const LOGIN = {
   username: process.env.CFM_LOGIN_USERNAME ?? "美食探索者",
   password: process.env.CFM_LOGIN_PASSWORD ?? "demo-password-2026",
 };
+const SEARCH_KEYWORD = process.env.CFM_SEARCH_KEYWORD ?? "";
 
 const profileDir = mkdtempSync(path.join(tmpdir(), "cfm-chrome-"));
 const chrome = spawn(
@@ -176,8 +178,59 @@ async function main() {
     });
   }
 
-  if (markerInfo) {
+  if (markerInfo && !SEARCH_KEYWORD) {
     await clickAt(markerInfo.x, markerInfo.y);
+  }
+
+  if (SEARCH_KEYWORD) {
+    // 在首页搜索框输入关键词并回车，验证搜索结果面板
+    const searchBox = await client.send("Runtime.evaluate", {
+      expression: `(() => {
+        const input = document.querySelector('.toolbar-search');
+        if (!input) return null;
+        const rect = input.getBoundingClientRect();
+        return { x: Math.round(rect.x + rect.width / 2), y: Math.round(rect.y + rect.height / 2) };
+      })()`,
+      returnByValue: true,
+    });
+    if (searchBox.result.value) {
+      await clickAt(searchBox.result.value.x, searchBox.result.value.y);
+      await client.send("Input.insertText", { text: SEARCH_KEYWORD });
+
+      const typed = await client.send("Runtime.evaluate", {
+        expression: `document.querySelector('.toolbar-search')?.value ?? null`,
+        returnByValue: true,
+      });
+      console.log("搜索框中的内容：", JSON.stringify(typed.result.value));
+
+      // 点击搜索按钮提交表单（比模拟回车更稳定）
+      const submitBox = await client.send("Runtime.evaluate", {
+        expression: `(() => {
+          const button = document.querySelector('.toolbar-search-form button[type="submit"]');
+          if (!button) return null;
+          const rect = button.getBoundingClientRect();
+          return { x: Math.round(rect.x + rect.width / 2), y: Math.round(rect.y + rect.height / 2) };
+        })()`,
+        returnByValue: true,
+      });
+      if (submitBox.result.value) {
+        await clickAt(submitBox.result.value.x, submitBox.result.value.y);
+      }
+      await sleep(2000);
+      const searchState = await client.send("Runtime.evaluate", {
+        expression: `(() => {
+          const panel = document.querySelector('.search-results');
+          return {
+            visible: Boolean(panel),
+            text: panel ? panel.innerText.replace(/\\n/g, ' | ') : null,
+          };
+        })()`,
+        returnByValue: true,
+      });
+      console.log("搜索结果面板：", JSON.stringify(searchState.result.value, null, 2));
+    } else {
+      console.log("未找到搜索框（该页面可能不是地图首页）。");
+    }
   }
 
   const immediate = await client.send("Runtime.evaluate", {
@@ -190,7 +243,7 @@ async function main() {
   console.log("点击后立即状态：", JSON.stringify(immediate.result.value));
 
   // 再次点击同一个点位应当关闭卡片；点击地图空白区域则不应关闭
-  if (markerInfo) {
+  if (markerInfo && !SEARCH_KEYWORD) {
     await clickAt(markerInfo.x, markerInfo.y);
     await sleep(600);
     const afterToggle = await client.send("Runtime.evaluate", {

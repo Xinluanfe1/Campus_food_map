@@ -13,6 +13,7 @@ interface FoodMapProps {
   resetSignal: number;
   onSelectPoint: (point: ShopPoint) => void;
   onMapError: (message: string) => void;
+  focusTarget?: { id: number; token: number } | null;
   renderOverlay?: (
     point: { x: number; y: number; width: number; height: number } | null,
   ) => ReactNode;
@@ -31,6 +32,7 @@ export default function FoodMap({
   resetSignal,
   onSelectPoint,
   onMapError,
+  focusTarget,
   renderOverlay,
 }: FoodMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -236,6 +238,19 @@ export default function FoodMap({
       );
     }
   }, [resetSignal, campus]);
+
+  // 从排行榜或搜索结果定位到指定点位：平移地图使点位进入视野。
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !focusTarget) {
+      return;
+    }
+    const latlng = pointLatLngsRef.current.get(focusTarget.id);
+    if (!latlng) {
+      return;
+    }
+    map.panTo(L.latLng(latlng[0], latlng[1]), { animate: true });
+  }, [focusTarget, points]);
 
   return (
     <div className="map-stage">

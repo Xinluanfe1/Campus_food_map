@@ -3,6 +3,8 @@ import type {
   CampusMapConfig,
   CampusMapUploadResult,
   CampusSummary,
+  ContributionSummary,
+  ContributorItem,
   HealthData,
   PagedData,
   PendingShopItem,
@@ -14,6 +16,8 @@ import type {
   ShopPointsData,
   ShopSubmitPayload,
   MyShopItem,
+  RankingShopItem,
+  SearchShopItem,
   UserPublic,
 } from "../types/api";
 
@@ -300,4 +304,46 @@ export function resolveReport(
     method: "POST",
     body: { action: "hide_review", handling_note: handlingNote },
   });
+}
+
+export function fetchShopRankings(
+  campusId: string,
+  shopType: "all" | "shop" | "vendor" = "all",
+  sort: "desc" | "asc" = "desc",
+  page = 1,
+  pageSize = 20,
+): Promise<ApiResponse<PagedData<RankingShopItem>>> {
+  const query = `shop_type=${shopType}&sort=${sort}&page=${page}&page_size=${pageSize}`;
+  return request<PagedData<RankingShopItem>>(
+    `/campuses/${encodeURIComponent(campusId)}/rankings/shops?${query}`,
+  );
+}
+
+export function fetchContributorRankings(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+): Promise<ApiResponse<PagedData<ContributorItem>>> {
+  return request<PagedData<ContributorItem>>(
+    `/campuses/${encodeURIComponent(campusId)}/rankings/contributors?page=${page}&page_size=${pageSize}`,
+  );
+}
+
+export function searchShops(
+  campusId: string,
+  keyword: string,
+  page = 1,
+  pageSize = 20,
+): Promise<ApiResponse<PagedData<SearchShopItem> & { keyword: string }>> {
+  const query = `q=${encodeURIComponent(keyword)}&page=${page}&page_size=${pageSize}`;
+  return request<PagedData<SearchShopItem> & { keyword: string }>(
+    `/campuses/${encodeURIComponent(campusId)}/search?${query}`,
+  );
+}
+
+export function fetchMyContribution(
+  campusId?: string,
+): Promise<ApiResponse<ContributionSummary>> {
+  const query = campusId ? `?campus_id=${encodeURIComponent(campusId)}` : "";
+  return request<ContributionSummary>(`/users/me/contributions${query}`);
 }

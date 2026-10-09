@@ -192,3 +192,36 @@ export interface ReportItem {
   handling_note: string | null;
   created_at: string;
 }
+
+export interface RankingShopItem {
+  rank: number;
+  shop_id: number;
+  name: string;
+  shop_type: "shop" | "vendor";
+  average_rating: number;
+  weighted_rating: number;
+  review_count: number;
+}
+
+export interface SearchShopItem {
+  id: number;
+  name: string;
+  shop_type: "shop" | "vendor";
+  average_rating: number | null;
+  weighted_rating: number | null;
+  review_count: number;
+}
+
+export interface ContributorItem {
+  rank: number;
+  user_id: number;
+  username: string;
+  approved_shop_count: number;
+  first_reached_at: string | null;
+}
+
+export interface ContributionSummary {
+  campus_id: string | null;
+  approved_shop_count: number;
+  rank: number | null;
+}
