@@ -1,0 +1,81 @@
+:root {
+  color-scheme: light;
+  font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+  line-height: 1.6;
+  color: #1f2329;
+  background-color: #f5f6f8;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+
+.page-header h1 {
+  margin: 0 0 12px;
+  font-size: 30px;
+}
+
+.subtitle {
+  color: #4e5969;
+  margin: 0;
+}
+
+.card {
+  margin-top: 32px;
+  padding: 24px;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 2px 10px rgba(31, 35, 41, 0.08);
+}
+
+.card h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
+
+.health {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.health-loading {
+  background: #f2f3f5;
+  color: #4e5969;
+}
+
+.health-ok {
+  background: #e8f7ee;
+  color: #1f8a4c;
+}
+
+.health-error {
+  background: #fdecec;
+  color: #d03050;
+}
+
+.hint {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+code {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #f2f3f5;
+  font-family: Consolas, "Courier New", monospace;
+}
+
+.page-footer {
+  margin-top: 32px;
+  color: #86909c;
+  font-size: 14px;
+}

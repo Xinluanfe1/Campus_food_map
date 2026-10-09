@@ -1,0 +1,14 @@
+{
+  "campus_id": "swjtu_xipu",
+  "campus_name": "西南交通大学犀浦校区",
+  "map_type": "image",
+  "map_asset_url": "/assets/maps/swjtu_xipu.png",
+  "allow_off_campus": false,
+  "image_width": 2400,
+  "image_height": 1600,
+  "default_center": {
+    "map_x": 0.5,
+    "map_y": 0.5
+  },
+  "default_zoom": 1
+}
