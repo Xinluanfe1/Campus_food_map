@@ -2,7 +2,7 @@ import { Link, Route, Routes } from "react-router-dom";
 
 import AppHeader from "./components/AppHeader";
 import { RequireAdmin, RequireAuth } from "./components/RouteGuards";
-import AdminShopsPage from "./pages/AdminShopsPage";
+import AdminPage from "./pages/AdminPage";
 import LoginPage from "./pages/LoginPage";
 import MapPage from "./pages/MapPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -26,10 +26,10 @@ export default function App() {
           }
         />
         <Route
-          path="/admin/shops"
+          path="/admin"
           element={
             <RequireAdmin>
-              <AdminShopsPage />
+              <AdminPage />
             </RequireAdmin>
           }
         />

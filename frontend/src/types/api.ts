@@ -152,3 +152,43 @@ export interface PendingShopItem {
 export interface ShopPhotoUploadResult {
   photo_url: string;
 }
+
+export interface ReviewReplyItem {
+  id: number;
+  user_id: number;
+  username: string;
+  content: string;
+  created_at: string;
+}
+
+export interface ReviewItem {
+  id: number;
+  user_id: number;
+  username: string;
+  rating: number;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  like_count: number;
+  dislike_count: number;
+  my_reaction: "like" | "dislike" | null;
+  is_mine: boolean;
+  replies: ReviewReplyItem[];
+}
+
+export interface ReportItem {
+  id: number;
+  review_id: number;
+  review_content: string | null;
+  review_status: string | null;
+  shop_id: number | null;
+  shop_name: string | null;
+  reporter_id: number;
+  reporter_username: string;
+  reason: string;
+  status: "pending" | "resolved" | "dismissed";
+  handled_by: number | null;
+  handled_at: string | null;
+  handling_note: string | null;
+  created_at: string;
+}

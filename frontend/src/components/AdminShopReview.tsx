@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { approveShop, fetchCampusMap, fetchPendingShops, rejectShop } from "../api/client";
-import PointPicker, { type PickedPoint } from "../components/PointPicker";
 import type { CampusMapConfig, PendingShopItem } from "../types/api";
+import PointPicker, { type PickedPoint } from "./PointPicker";
 
 function formatTime(value: string): string {
   const date = new Date(value);
@@ -18,7 +18,7 @@ function toPickedPoint(item: PendingShopItem): PickedPoint {
   };
 }
 
-export default function AdminShopsPage() {
+export default function AdminShopReview() {
   const [items, setItems] = useState<PendingShopItem[]>([]);
   const [campusMap, setCampusMap] = useState<Record<string, CampusMapConfig>>({});
   const [reasons, setReasons] = useState<Record<number, string>>({});
@@ -85,10 +85,7 @@ export default function AdminShopsPage() {
   }
 
   return (
-    <main className="page admin-shops-page">
-      <h1>店铺审核</h1>
-      <p className="subtitle">审核用户提交的店铺：通过后立即公开，拒绝时必须填写原因。</p>
-
+    <section>
       {message && <p className="alert alert-success">{message}</p>}
       {error && <p className="alert alert-error">{error}</p>}
 
@@ -104,8 +101,8 @@ export default function AdminShopsPage() {
               <span className="status-tag status-pending">待审核</span>
             </div>
             <p className="hint">
-              类型：{item.shop_type === "vendor" ? "摊贩" : "商铺"} · 提交者：{item.submitter_username} · 提交时间：
-              {formatTime(item.created_at)}
+              类型：{item.shop_type === "vendor" ? "摊贩" : "商铺"} · 提交者：
+              {item.submitter_username} · 提交时间：{formatTime(item.created_at)}
             </p>
             <p className="review-description">{item.description}</p>
             {item.photo_url && (
@@ -151,6 +148,6 @@ export default function AdminShopsPage() {
           </section>
         ))
       )}
-    </main>
+    </section>
   );
 }

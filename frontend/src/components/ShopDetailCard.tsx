@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 import { computeCardPlacement } from "../utils/cardPlacement";
 import type { ShopDetailData } from "../types/api";
+import ShopReviews from "./ShopReviews";
 
 interface ShopDetailCardProps {
   pointX: number;
@@ -14,10 +15,11 @@ interface ShopDetailCardProps {
   loading: boolean;
   error: string;
   onClose: () => void;
+  onRatingChanged?: () => void;
 }
 
 const CARD_WIDTH = 320;
-export const CARD_MAX_HEIGHT = 340;
+export const CARD_MAX_HEIGHT = 460;
 
 function formatRating(value: number | null | undefined): string {
   return value === null || value === undefined ? "暂无评分" : value.toFixed(2);
@@ -34,6 +36,7 @@ export default function ShopDetailCard({
   loading,
   error,
   onClose,
+  onRatingChanged,
 }: ShopDetailCardProps) {
   const [photoFailed, setPhotoFailed] = useState(false);
   const [cardHeight, setCardHeight] = useState(CARD_MAX_HEIGHT);
@@ -126,7 +129,7 @@ export default function ShopDetailCard({
                 {detail.status === "pending" ? "待审核（仅自己和管理员可见）" : "已拒绝"}
               </p>
             )}
-            <p className="card-note">评价列表与评价互动入口将在第六步提供。</p>
+            <ShopReviews shopId={detail.id} onRatingChanged={onRatingChanged} />
           </>
         )}
       </div>

@@ -157,6 +157,19 @@ export default function MapPage() {
     setError(message);
   }, []);
 
+  /** 评价发生变化后刷新卡片上的评分统计。 */
+  const refreshDetail = useCallback(async () => {
+    if (!selectedPoint) {
+      return;
+    }
+    try {
+      const response = await fetchShopDetail(campusId, selectedPoint.id);
+      setDetail(response.data);
+    } catch {
+      // 刷新评分统计失败不影响卡片继续使用
+    }
+  }, [campusId, selectedPoint]);
+
   const visibleCount = useMemo(
     () =>
       points.filter((point) => shopTypeFilter === "all" || point.shop_type === shopTypeFilter)
@@ -244,6 +257,7 @@ export default function MapPage() {
                     loading={detailLoading}
                     error={detailError}
                     onClose={handleClearSelection}
+                    onRatingChanged={refreshDetail}
                   />
                 );
               }}

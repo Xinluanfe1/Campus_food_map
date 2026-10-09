@@ -35,7 +35,7 @@ export default function AppHeader() {
           ) : user ? (
             <>
               <Link to="/submit">提交店铺</Link>
-              {user.role === "admin" && <Link to="/admin/shops">审核店铺</Link>}
+              {user.role === "admin" && <Link to="/admin">管理后台</Link>}
               <span className="nav-muted">
                 {user.username}
                 {user.role === "admin" ? "（管理员）" : ""}
