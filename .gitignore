@@ -241,6 +241,9 @@ data/shop_photos/
 # 备份文件
 backups/
 
+# 本地调试启动脚本记录的进程号
+.localtest.pids
+
 # 编辑器与系统文件
 .vscode/
 .DS_Store
